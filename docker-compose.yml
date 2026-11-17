@@ -32,6 +32,8 @@ services:
       REDIS_URL: redis://redis:6379/0
       JWT_SECRET: ${JWT_SECRET:-local-demo-paired-press-replace-for-production}
       SEED_DEMO: ${SEED_DEMO:-true}
+      STATION_ID: ${STATION_ID:-station-paired-press-local}
+      ARTIFACT_DIR: /app/artifacts
     ports: ["${BACKEND_PORT:-19242}:8000"]
     volumes: ["run-artifacts:/app/artifacts"]
     depends_on:

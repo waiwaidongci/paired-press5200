@@ -12,6 +12,7 @@
 - 配对差均值与精确符号翻转置换检验。同一纸张上成对测量；小样本枚举全部符号，较大样本使用固定种子 Monte Carlo 与加一校正。
 - 每次运行冻结参数、观测和SHA256。Redis任务由独立worker计算，写DB与共享产物卷；输入修改不会改写历史结果。
 - 负责人复核不可覆盖；审计记录登录、数据改动、排队、复核与导出；240请求/分钟限流、全局可恢复错误。
+- 异地试印站研究包迁入迁出（研究包迁移页）：同一时点打包纸样、冻结输入、分析、复核与计算留档；迁出只读、登记可继续。迁入核验引用与留档 SHA256，编号按来源映射，同名异源追加来源后缀并存，同源重试幂等不新增，内容变动拒绝且原项不变；数据库与留档齐备后原子发布，中断恢复与并发迁入沿用同一映射，失败无半项可见。
 
 ## 快速启动
 ```bash
@@ -48,7 +49,9 @@ docker compose exec -T backend python -m scripts.seed_demo
 
 `frontend/src/`分api、stores、types、components/common、hooks、pages、router、utils、constants；`backend/src/`分config、models、schemas、services、controllers、routes、middlewares、utils、constants；`backend/scripts/seed_demo.py`自然键插入、重复不覆盖修改；`backend/migrations/README.md`说明schema版本。
 
-环境变量 `.env.example`：COMPOSE_PROJECT_NAME、FRONTEND_PORT、BACKEND_PORT、DB_PORT、DB_PASSWORD、JWT_SECRET、SEED_DEMO。开发时在本地venv安装backend/requirements.txt，设置DATABASE_URL、REDIS_URL、JWT_SECRET再运行uvicorn；前端开发经Nginx代理 `/api/` 到不带前缀的API。
+环境变量 `.env.example`：COMPOSE_PROJECT_NAME、FRONTEND_PORT、BACKEND_PORT、DB_PORT、DB_PASSWORD、JWT_SECRET、SEED_DEMO、STATION_ID（每个试印站取不同值，迁入据此识别来源并禁止本站回迁）。开发时在本地venv安装backend/requirements.txt，设置DATABASE_URL、REDIS_URL、JWT_SECRET再运行uvicorn；前端开发经Nginx代理 `/api/` 到不带前缀的API。
+
+研究包迁移接口：`GET /packages/studies/{id}/export`（分析师/负责人，下载ZIP）、`POST /packages/preview`（登录用户，核对编号碰撞与坏包，不写库）、`POST /packages/import`（仅负责人，原子迁入）、`GET /packages/imports`（迁入登记）。包内 `manifest.json` 含整体 SHA256；引用核验覆盖运行→研究、纸样→研究、复核→运行、留档→运行，并校验留档文件 SHA256 与其内嵌输入校验值。
 
 共享枚举：角色admin/analyst/viewer和队列queued/running/completed/failed；后端`src/constants/enums.py`、认证与worker使用相同值；前端`src/types/enums.js`、状态与角色界面使用相同值。Google Fonts：Noto Serif SC + IBM Plex Mono；断网使用serif/monospace回退。
 
